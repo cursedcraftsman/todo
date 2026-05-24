@@ -1,0 +1,153 @@
+/* src/index.css */
+/* ==========================================
+   Global Styles + Tailwind Imports
+   ========================================== */
+ 
+/* These three lines import all of Tailwind's styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+ 
+/* Import beautiful Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+ 
+/* ==========================================
+   CSS Custom Properties (Variables)
+   Light Mode Colors
+   ========================================== */
+:root {
+  --bg-primary: #faf7f2;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1a1a2e;
+  --text-primary: #1a1a2e;
+  --text-secondary: #6b7280;
+  --accent: #e8604c;
+  --accent-light: #fef2f0;
+  --accent-2: #4f8ef7;
+  --border: #e8e0d5;
+  --shadow: rgba(26, 26, 46, 0.08);
+}
+ 
+/* ==========================================
+   Dark Mode Colors
+   ========================================== */
+.dark {
+  --bg-primary: #0f0f1a;
+  --bg-card: #1a1a2e;
+  --bg-sidebar: #0a0a15;
+  --text-primary: #f0ede8;
+  --text-secondary: #9ca3af;
+  --accent: #e8604c;
+  --accent-light: #2a1a18;
+  --accent-2: #4f8ef7;
+  --border: #2a2a42;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+ 
+/* ==========================================
+   Base Styles
+   ========================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+ 
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+}
+ 
+/* ==========================================
+   Custom Scrollbar
+   ========================================== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+ 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+ 
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+ 
+/* ==========================================
+   Custom Checkbox Styling
+   ========================================== */
+.task-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+ 
+.task-checkbox:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+ 
+.task-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+ 
+.task-checkbox:hover:not(:checked) {
+  border-color: var(--accent);
+  background-color: var(--accent-light);
+}
+ 
+/* ==========================================
+   Utility Classes
+   ========================================== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+ 
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+ 
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(232, 96, 76, 0.35);
+}
+ 
+.btn-primary:active {
+  transform: translateY(0);
+}
+ 
+/* Smooth transitions on theme switch */
+*, *::before, *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
