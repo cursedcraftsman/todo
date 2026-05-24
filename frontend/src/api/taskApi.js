@@ -35,7 +35,7 @@ export const deleteTask = async (id) => {
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://todo-backend-6kw7.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
