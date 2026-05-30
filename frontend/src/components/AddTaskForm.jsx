@@ -1,63 +1,51 @@
-// src/components/AddTaskForm.jsx
-// ==========================================
-// AddTaskForm Component
-// ==========================================
-// A slide-down form panel for creating new tasks.
-// Shows when the "Add Task" button is clicked.
- 
 import React, { useState } from "react";
 import { format } from "date-fns";
- 
-// Helper to get today's date in YYYY-MM-DD format (required by HTML date input)
+
 const getTodayString = () => format(new Date(), "yyyy-MM-dd");
- 
-// Initial empty state for the form
+
 const INITIAL_FORM = {
   title: "",
   description: "",
-  date: getTodayString(),  // Default to today's date
-  completionTime: "09:00", // Default time
+  date: getTodayString(),
+  completionTime: "09:00",
+  isRecurring: false,
+  recurringDays: 7,
 };
- 
+
 const AddTaskForm = ({ onAdd, onClose }) => {
-  // Form data state
   const [formData, setFormData] = useState(INITIAL_FORM);
-  // Loading state while submitting
   const [submitting, setSubmitting] = useState(false);
-  // Error message from submission
   const [error, setError] = useState("");
- 
-  // Handle any input field change
-  // "name" matches the HTML input's name attribute
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(""); // Clear error when user types
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setError("");
   };
- 
-  // Handle form submission
+
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent page refresh on form submit
- 
-    // Basic validation
+    e.preventDefault();
     if (!formData.title.trim()) {
       setError("Task title is required");
       return;
     }
- 
     setSubmitting(true);
-    const result = await onAdd(formData);
+    const result = await onAdd({
+      ...formData,
+      recurringDays: formData.isRecurring ? Number(formData.recurringDays) : 0,
+    });
     setSubmitting(false);
- 
     if (result.success) {
-      setFormData(INITIAL_FORM); // Reset form
-      onClose(); // Close the form panel
+      setFormData(INITIAL_FORM);
+      onClose();
     } else {
       setError(result.message || "Failed to add task");
     }
   };
- 
-  // Shared input styles for consistency
+
   const inputStyle = {
     background: "var(--bg-primary)",
     border: "1px solid var(--border)",
@@ -70,14 +58,20 @@ const AddTaskForm = ({ onAdd, onClose }) => {
     outline: "none",
     transition: "border-color 0.2s",
   };
- 
+
   return (
     <div
       className="card p-6 mb-6 animate-slide-in"
       style={{ borderTop: "3px solid var(--accent)" }}
     >
       <div className="flex justify-between items-center mb-5">
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", color: "var(--text-primary)" }}>
+        <h2
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "20px",
+            color: "var(--text-primary)",
+          }}
+        >
           Add New Task
         </h2>
         <button
@@ -85,16 +79,27 @@ const AddTaskForm = ({ onAdd, onClose }) => {
           className="p-1 rounded-full transition-colors"
           style={{ color: "var(--text-secondary)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
- 
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Task Title - Required */}
+        {/* Title */}
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+          <label
+            className="block text-sm font-medium mb-1"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Task Title <span style={{ color: "var(--accent)" }}>*</span>
           </label>
           <input
@@ -108,11 +113,15 @@ const AddTaskForm = ({ onAdd, onClose }) => {
             onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
           />
         </div>
- 
-        {/* Description - Optional */}
+
+        {/* Description */}
         <div>
-          <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
-            Description <span className="text-xs opacity-60">(optional)</span>
+          <label
+            className="block text-sm font-medium mb-1"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Description{" "}
+            <span className="text-xs opacity-60">(optional)</span>
           </label>
           <textarea
             name="description"
@@ -125,11 +134,14 @@ const AddTaskForm = ({ onAdd, onClose }) => {
             onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
           />
         </div>
- 
-        {/* Date and Time - side by side */}
+
+        {/* Date + Time */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Date <span style={{ color: "var(--accent)" }}>*</span>
             </label>
             <input
@@ -143,7 +155,10 @@ const AddTaskForm = ({ onAdd, onClose }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
               Due Time <span style={{ color: "var(--accent)" }}>*</span>
             </label>
             <input
@@ -157,18 +172,99 @@ const AddTaskForm = ({ onAdd, onClose }) => {
             />
           </div>
         </div>
- 
-        {/* Error Message */}
+
+        {/* RECURRING SECTION */}
+        <div
+          className="rounded-xl p-4"
+          style={{
+            background: "var(--bg-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {/* Toggle switch */}
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <div
+              onClick={() =>
+                setFormData((p) => ({ ...p, isRecurring: !p.isRecurring }))
+              }
+              style={{
+                width: "40px",
+                height: "22px",
+                borderRadius: "999px",
+                background: formData.isRecurring
+                  ? "var(--accent)"
+                  : "var(--border)",
+                position: "relative",
+                transition: "background 0.2s",
+                flexShrink: 0,
+                cursor: "pointer",
+              }}
+            >
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  borderRadius: "50%",
+                  background: "#fff",
+                  position: "absolute",
+                  top: "3px",
+                  left: formData.isRecurring ? "21px" : "3px",
+                  transition: "left 0.2s",
+                }}
+              />
+            </div>
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--text-primary)" }}
+            >
+              🔁 Is this a recurring task?
+            </span>
+          </label>
+
+          {/* Days input — only shown when recurring is on */}
+          {formData.isRecurring && (
+            <div className="mt-3 flex items-center gap-3 flex-wrap">
+              <label
+                className="text-sm"
+                style={{ color: "var(--text-secondary)", whiteSpace: "nowrap" }}
+              >
+                Repeat for
+              </label>
+              <input
+                type="number"
+                name="recurringDays"
+                min="1"
+                max="365"
+                value={formData.recurringDays}
+                onChange={handleChange}
+                style={{ ...inputStyle, width: "80px", textAlign: "center" }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
+              <label
+                className="text-sm"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                days after start date
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* Error */}
         {error && (
           <div
             className="text-sm px-3 py-2 rounded-lg"
-            style={{ background: "var(--accent-light)", color: "var(--accent)" }}
+            style={{
+              background: "var(--accent-light)",
+              color: "var(--accent)",
+            }}
           >
             ⚠ {error}
           </div>
         )}
- 
-        {/* Submit Buttons */}
+
+        {/* Buttons */}
         <div className="flex gap-3 pt-1">
           <button
             type="submit"
@@ -195,5 +291,5 @@ const AddTaskForm = ({ onAdd, onClose }) => {
     </div>
   );
 };
- 
+
 export default AddTaskForm;
