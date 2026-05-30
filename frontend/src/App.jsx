@@ -1,10 +1,3 @@
-// src/App.jsx
-// ==========================================
-// Root App Component
-// ==========================================
-// This is the main layout component. It brings together
-// all other components and the custom hooks.
- 
 import React, { useState } from "react";
 import { format } from "date-fns";
 import useTasks from "./hooks/useTasks";
@@ -32,22 +25,20 @@ const App = () => {
   } = useTasks();
 
   const [showForm, setShowForm] = useState(false);
-
-  // Selected date from calendar (null = show all)
+  const [showMobileCalendar, setShowMobileCalendar] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(
-  format(new Date(), "yyyy-MM-dd")
-);
+    format(new Date(), "yyyy-MM-dd")
+  );
 
   const todayFormatted = format(new Date(), "EEEE, MMMM d, yyyy");
 
-  // If a calendar date is selected, only show that date
-  // Otherwise show all sortedDates
   const visibleDates = selectedCalendarDate
     ? sortedDates.filter((d) => d === selectedCalendarDate)
     : sortedDates;
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
+
       {/* TOP NAV */}
       <header
         className="sticky top-0 z-50"
@@ -75,7 +66,22 @@ const App = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Mobile calendar toggle button */}
+            <button
+              onClick={() => setShowMobileCalendar((p) => !p)}
+              className="p-2 rounded-xl transition-all lg:hidden"
+              style={{
+                background: showMobileCalendar ? "var(--accent)" : "var(--bg-primary)",
+                border: "1px solid var(--border)",
+                color: showMobileCalendar ? "white" : "var(--text-primary)",
+              }}
+              title="Toggle Calendar"
+            >
+              📅
+            </button>
+
+            {/* Dark mode toggle */}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-xl transition-all"
@@ -84,11 +90,11 @@ const App = () => {
                 border: "1px solid var(--border)",
                 color: "var(--text-primary)",
               }}
-              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDark ? "☀️" : "🌙"}
             </button>
 
+            {/* Add Task */}
             <button
               onClick={() => setShowForm((prev) => !prev)}
               className="btn-primary flex items-center gap-2 text-sm"
@@ -101,13 +107,30 @@ const App = () => {
             </button>
           </div>
         </div>
+
+        {/* Mobile Calendar Dropdown */}
+        {showMobileCalendar && (
+          <div
+            className="lg:hidden px-4 pb-4"
+            style={{ borderTop: "1px solid var(--border)" }}
+          >
+            <MiniCalendar
+              tasks={tasks}
+              selectedDate={selectedCalendarDate}
+              onSelectDate={(date) => {
+                setSelectedCalendarDate(date);
+                setShowMobileCalendar(false); // close after selecting
+              }}
+            />
+          </div>
+        )}
       </header>
 
       {/* MAIN */}
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex gap-8">
 
-          {/* SIDEBAR */}
+          {/* SIDEBAR — desktop only */}
           <aside className="w-64 flex-shrink-0 space-y-6 hidden lg:block">
 
             {/* Stats */}
@@ -209,7 +232,10 @@ const App = () => {
                 <span>
                   📅 Showing tasks for{" "}
                   <strong>
-                    {format(new Date(selectedCalendarDate + "T00:00:00"), "MMMM d, yyyy")}
+                    {format(
+                      new Date(selectedCalendarDate + "T00:00:00"),
+                      "MMMM d, yyyy"
+                    )}
                   </strong>
                 </span>
                 <button
@@ -241,8 +267,11 @@ const App = () => {
               <div className="flex justify-center items-center py-16">
                 <div className="text-center">
                   <div
-                    className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-3"
-                    style={{ borderColor: "var(--accent)", borderTopColor: "transparent" }}
+                    className="w-10 h-10 rounded-full border-2 animate-spin mx-auto mb-3"
+                    style={{
+                      borderColor: "var(--accent)",
+                      borderTopColor: "transparent",
+                    }}
                   />
                   <p style={{ color: "var(--text-secondary)" }} className="text-sm">
                     Loading tasks...
