@@ -12,13 +12,12 @@ import useDarkMode from "./hooks/useDarkMode";
 import AddTaskForm from "./components/AddTaskForm";
 import DateSection from "./components/DateSection";
 import StatsPanel from "./components/StatsPanel";
- 
+import MiniCalendar from "./components/MiniCalendar";
+
 const App = () => {
-  // Dark mode state from our custom hook
   const { isDark, toggleDarkMode } = useDarkMode();
- 
-  // All task state and operations from our custom hook
   const {
+    tasks,
     tasksByDate,
     sortedDates,
     loading,
@@ -31,20 +30,25 @@ const App = () => {
     removeTask,
     editTask,
   } = useTasks();
- 
-  // Control whether the AddTaskForm is visible
+
   const [showForm, setShowForm] = useState(false);
- 
-  // Today's date formatted nicely for the header
+
+  // Selected date from calendar (null = show all)
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(
+  format(new Date(), "yyyy-MM-dd")
+);
+
   const todayFormatted = format(new Date(), "EEEE, MMMM d, yyyy");
- 
+
+  // If a calendar date is selected, only show that date
+  // Otherwise show all sortedDates
+  const visibleDates = selectedCalendarDate
+    ? sortedDates.filter((d) => d === selectedCalendarDate)
+    : sortedDates;
+
   return (
-    <div
-      style={{ minHeight: "100vh", background: "var(--bg-primary)" }}
-    >
-      {/* ==========================================
-          TOP NAVIGATION BAR
-          ========================================== */}
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)" }}>
+      {/* TOP NAV */}
       <header
         className="sticky top-0 z-50"
         style={{
@@ -54,7 +58,6 @@ const App = () => {
         }}
       >
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          {/* Logo + Date */}
           <div>
             <h1
               style={{
@@ -71,10 +74,8 @@ const App = () => {
               {todayFormatted}
             </p>
           </div>
- 
-          {/* Right side controls */}
+
           <div className="flex items-center gap-3">
-            {/* Dark mode toggle */}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-xl transition-all"
@@ -87,14 +88,11 @@ const App = () => {
             >
               {isDark ? "☀️" : "🌙"}
             </button>
- 
-            {/* Add Task Button */}
+
             <button
               onClick={() => setShowForm((prev) => !prev)}
               className="btn-primary flex items-center gap-2 text-sm"
-              style={{
-                background: showForm ? "#555" : "var(--accent)",
-              }}
+              style={{ background: showForm ? "#555" : "var(--accent)" }}
             >
               <span style={{ fontSize: "18px", lineHeight: 1 }}>
                 {showForm ? "×" : "+"}
@@ -104,17 +102,15 @@ const App = () => {
           </div>
         </div>
       </header>
- 
-      {/* ==========================================
-          MAIN CONTENT AREA
-          ========================================== */}
+
+      {/* MAIN */}
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex gap-8">
- 
-          {/* ---- LEFT SIDEBAR ---- */}
+
+          {/* SIDEBAR */}
           <aside className="w-64 flex-shrink-0 space-y-6 hidden lg:block">
- 
-            {/* Stats Card */}
+
+            {/* Stats */}
             <div className="card p-5">
               <h3
                 className="text-sm font-semibold mb-4"
@@ -128,8 +124,27 @@ const App = () => {
               </h3>
               <StatsPanel stats={stats} />
             </div>
- 
-            {/* Filter Card */}
+
+            {/* Calendar */}
+            <div>
+              <h3
+                className="text-sm font-semibold mb-3 px-1"
+                style={{
+                  color: "var(--text-secondary)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                Calendar
+              </h3>
+              <MiniCalendar
+                tasks={tasks}
+                selectedDate={selectedCalendarDate}
+                onSelectDate={setSelectedCalendarDate}
+              />
+            </div>
+
+            {/* Filter */}
             <div className="card p-5">
               <h3
                 className="text-sm font-semibold mb-3"
@@ -163,8 +178,8 @@ const App = () => {
                 ))}
               </div>
             </div>
- 
-            {/* Quick tips */}
+
+            {/* Tips */}
             <div
               className="p-4 rounded-xl text-xs"
               style={{
@@ -177,23 +192,41 @@ const App = () => {
               <ul className="space-y-1 opacity-80">
                 <li>• Click ○ to mark done</li>
                 <li>• Hover to edit or delete</li>
-                <li>• Add tasks for any date</li>
+                <li>• Click a date on calendar to filter</li>
               </ul>
             </div>
           </aside>
- 
-          {/* ---- MAIN CONTENT ---- */}
+
+          {/* MAIN CONTENT */}
           <div className="flex-1 min-w-0">
- 
-            {/* Add Task Form (slides in when showForm is true) */}
-            {showForm && (
-              <AddTaskForm
-                onAdd={addTask}
-                onClose={() => setShowForm(false)}
-              />
+
+            {/* Selected date banner */}
+            {selectedCalendarDate && (
+              <div
+                className="card px-4 py-3 mb-4 flex items-center justify-between text-sm"
+                style={{ borderLeft: "3px solid var(--accent)", color: "var(--accent)" }}
+              >
+                <span>
+                  📅 Showing tasks for{" "}
+                  <strong>
+                    {format(new Date(selectedCalendarDate + "T00:00:00"), "MMMM d, yyyy")}
+                  </strong>
+                </span>
+                <button
+                  onClick={() => setSelectedCalendarDate(null)}
+                  style={{ color: "var(--text-secondary)", fontSize: "18px", lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </div>
             )}
- 
-            {/* Error Banner */}
+
+            {/* Add Task Form */}
+            {showForm && (
+              <AddTaskForm onAdd={addTask} onClose={() => setShowForm(false)} />
+            )}
+
+            {/* Error */}
             {error && (
               <div
                 className="card px-4 py-3 mb-4 text-sm flex items-center justify-between"
@@ -202,8 +235,8 @@ const App = () => {
                 <span>⚠ {error}</span>
               </div>
             )}
- 
-            {/* Loading State */}
+
+            {/* Loading */}
             {loading && (
               <div className="flex justify-center items-center py-16">
                 <div className="text-center">
@@ -217,28 +250,35 @@ const App = () => {
                 </div>
               </div>
             )}
- 
-            {/* Empty State */}
-            {!loading && sortedDates.length === 0 && (
+
+            {/* Empty state */}
+            {!loading && visibleDates.length === 0 && (
               <div className="text-center py-20">
-                <div style={{ fontSize: "60px" }}>📝</div>
+                <div style={{ fontSize: "60px" }}>
+                  {selectedCalendarDate ? "📅" : "📝"}
+                </div>
                 <h3
                   className="mt-4 text-xl font-semibold"
-                  style={{ fontFamily: "'Playfair Display', serif", color: "var(--text-primary)" }}
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    color: "var(--text-primary)",
+                  }}
                 >
-                  No tasks yet
+                  {selectedCalendarDate ? "No tasks this day" : "No tasks yet"}
                 </h3>
                 <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  {filter !== "all"
+                  {selectedCalendarDate
+                    ? "Try selecting a different date or add a new task."
+                    : filter !== "all"
                     ? `No ${filter} tasks found.`
-                    : "Click \"Add Task\" to get started!"}
+                    : 'Click "Add Task" to get started!'}
                 </p>
               </div>
             )}
- 
-            {/* Task List grouped by date */}
+
+            {/* Task list */}
             {!loading &&
-              sortedDates.map((date) => (
+              visibleDates.map((date) => (
                 <DateSection
                   key={date}
                   date={date}
@@ -254,5 +294,5 @@ const App = () => {
     </div>
   );
 };
- 
+
 export default App;
