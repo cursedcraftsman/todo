@@ -160,6 +160,7 @@ export default useTasks;
 
 */
 
+/*
 import { useState, useEffect, useCallback } from "react";
 import {
   getAllTasks,
@@ -254,6 +255,144 @@ const useTasks = () => {
   }, {});
 
   const sortedDates = Object.keys(tasksByDate).sort();
+
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter((t) => t.completed).length,
+    pending: tasks.filter((t) => !t.completed).length,
+    completionRate:
+      tasks.length > 0
+        ? Math.round(
+            (tasks.filter((t) => t.completed).length / tasks.length) * 100
+          )
+        : 0,
+  };
+
+  return {
+    tasks,
+    tasksByDate,
+    sortedDates,
+    loading,
+    error,
+    filter,
+    stats,
+    setFilter,
+    addTask,
+    toggleTaskCompletion,
+    removeTask,
+    editTask,
+    fetchTasks,
+  };
+};
+
+export default useTasks;
+
+*/
+
+import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
+import {
+  getAllTasks,
+  createTask,
+  updateTask,
+  toggleTask,
+  deleteTask,
+  dailyRefresh,
+} from "../api/taskApi";
+
+const useTasks = () => {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const fetchTasks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await dailyRefresh().catch(() => {});
+
+      const params = {};
+      if (filter === "completed") params.completed = true;
+      if (filter === "pending") params.completed = false;
+
+      const response = await getAllTasks(params);
+      setTasks(response || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch tasks");
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const addTask = async (taskData) => {
+    try {
+      const response = await createTask(taskData);
+      setTasks((prev) => [...prev, response]);
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to create task";
+      setError(message);
+      return { success: false, message };
+    }
+  };
+
+  const toggleTaskCompletion = async (id) => {
+    try {
+      const response = await toggleTask(id);
+      setTasks((prev) =>
+        prev.map((task) => (task._id === id ? response : task))
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to update task");
+    }
+  };
+
+  const removeTask = async (id) => {
+    try {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((task) => task._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete task");
+    }
+  };
+
+  const editTask = async (id, updatedData) => {
+    try {
+      const response = await updateTask(id, updatedData);
+      setTasks((prev) =>
+        prev.map((task) => (task._id === id ? response : task))
+      );
+      return { success: true };
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to update task";
+      setError(message);
+      return { success: false, message };
+    }
+  };
+
+  const tasksByDate = tasks.reduce((groups, task) => {
+    const date = task.date;
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(task);
+    return groups;
+  }, {});
+
+  // TODAY first → future dates next → past dates last (most recent past first)
+  const today = format(new Date(), "yyyy-MM-dd");
+  const sortedDates = Object.keys(tasksByDate).sort((a, b) => {
+    if (a === today) return -1;
+    if (b === today) return 1;
+    if (a > today && b > today) return a.localeCompare(b);  // future: ascending
+    if (a < today && b < today) return b.localeCompare(a);  // past: most recent first
+    if (a > today && b < today) return -1;  // future before past
+    if (a < today && b > today) return 1;   // past after future
+    return 0;
+  });
 
   const stats = {
     total: tasks.length,
